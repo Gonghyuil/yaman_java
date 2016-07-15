@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cherry.email.mapper.emailCheck">
+	<insert id="NumInsert">
+		INSERT INTO ycheck ( ycheck_id, ynum)
+		VALUES( #{ycheck_id} , #{ynum} )
+	</insert>
+	
+	<select id="numSelect" resultType="com.cherry.signup.domain.YcheckDto">
+		SELECT *
+  		  FROM ycheck
+ 		 WHERE ycheck_id = #{ycheck_id }
+   	  	   AND ynum = #{ynum}
+	</select>
+</mapper>

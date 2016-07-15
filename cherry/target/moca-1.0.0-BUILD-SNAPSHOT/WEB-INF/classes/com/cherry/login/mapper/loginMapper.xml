@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+ <mapper namespace="com.cherry.login.mapper.loginMapper">
+ 	
+ 	 <!-- 로그인 해서 사용자 정보 가져오는 쿼리 -->
+ 	 <select id="login" resultType="com.cherry.login.domain.AuthInfo" parameterType="com.cherry.login.domain.InfoDto">
+ 		
+ 		SELECT yaman_id, yname, ymaster
+  		  FROM YAMAN
+ 		 WHERE yaman_id = (
+ 							SELECT yaman_id
+  					  		  FROM YLOGIN
+  					 		 WHERE ypass = #{ypass}
+    				   		   AND yaman_id = (
+    											SELECT yaman_id 
+ 					  					  		  FROM YAMAN
+                     					 		 WHERE yemail = #{yemail}
+    											)
+ 						 )
+ 	</select>
+ 	
+ 	<!-- 로그인시 로그인상태 1로 바꾸어줌 -->
+ 	<update id="checkLogin">
+ 		UPDATE YAMAN 
+   		   SET yok = '1' 
+ 		 WHERE yaman_id = #{yaman_id}
+ 	</update> 
+ 	
+ 	<!-- 로그아웃시 로그인상태 0으로 바꾸어줌 -->
+ 	 <update id="checkLoginOut">
+ 		UPDATE YAMAN 
+   		   SET yok = '0' 
+ 		 WHERE yaman_id = #{yaman_id}
+ 	</update>
+ 	
+ 		<select id ="masterlist" resultType="com.cherry.login.domain.MasterDto">
+	
+	select yaman_id,yname, yemail, yexit, to_char(yreg, 'yyyy-mm-dd') as yreg from yaman where yexit = 'N' ORDER BY CAST(yaman_id AS int) desc
+	</select>
+	
+	<select id="yamanCount" resultType="com.cherry.login.domain.YamanCount">
+		select count(yaman_id) as count from yaman
+	</select>
+	
+	<select id="yamanExitCount" resultType="com.cherry.login.domain.YamanCount">
+	select count(yaman_id) as count from yaman where yexit='Y'
+	</select> 
+ </mapper>

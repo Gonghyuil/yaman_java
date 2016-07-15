@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cherry.board.mapper.BoardMapper">
+
+
+
+	<select id="selectList" resultType="com.cherry.board.domain.BoardDto">
+		select yboard_id,
+		a.yaman_id,
+		b.yemail as yemail,
+		ysubject,
+		ycontent,
+		to_char(yregdt, 'yyyy-mm-dd') as
+		yregdt
+		from YBOARD a, YAMAN b
+		where yboard_del = 'N'
+		AND a.YAMAN_ID =
+		b.YAMAN_ID
+	</select>
+
+	<select id="selectOne" resultType="com.cherry.board.domain.BoardDto">
+		select yboard_id,
+		a.yaman_id,
+		b.yemail,
+		ysubject,
+		ycontent,
+		to_char(yregdt, 'yyyy-mm-dd') as yregdt
+		from YBOARD
+		a, YAMAN b
+		where
+		yboard_id = #{yboard_id}
+		AND a.YAMAN_ID = b.YAMAN_ID
+
+	</select>
+
+
+	<insert id="insert">
+		<selectKey keyProperty="yboard_id" resultType="String"
+			order="BEFORE">
+			SELECT
+			SEQ_YBOARD_ID.NEXTVAL FROM dual
+		</selectKey>
+		INSERT INTO yboard(yboard_id,yaman_id,ysubject,ycontent,yregdt,yboard_del)
+		VALUES(
+		#{yboard_id},
+		#{yaman_id},
+		#{ysubject},
+		#{ycontent},
+		SYSDATE,
+		'N')
+	</insert>
+
+	<update id="emailSave">
+		update yboard set
+		answer = #{answer},
+		answer_title =
+		#{answer_title},
+		answer_yaman_id = #{answer_yaman_id},
+		answer_date =
+		sysdate
+
+		where yboard_id = #{yboard_id}
+	</update>
+
+	<delete id="yboard_del">
+		update yboard set
+		yboard_del = 'Y'
+		where yboard_id =
+		#{yboard_id}
+	</delete>
+
+
+
+</mapper>

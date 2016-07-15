@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cherry.reply.mapper.replyMapper">
+	<insert id="replyinsert" parameterType="com.cherry.reply.domain.ReplyDto">
+		insert into yreply (yreply_id, yaman_id, yphoto_id, ypromise_id, ytitle)
+		values(yreply_id_seq.nextval, #{yaman_id}, #{yphoto_id}, #{ypromise_id}, #{ytitle})
+		<selectKey keyProperty="yreply_id" resultType="Int" order="AFTER">
+			select YREPLY_ID_SEQ.currval from dual
+		</selectKey>
+	</insert>
+	
+	
+	<select id="selectMy" resultType="com.cherry.reply.domain.ReplyDto">
+		SELECT YAMAN.yname AS yname
+		, YREPLY.YAMAN_id AS YAMAN_id
+        , YREPLY.yphoto_id AS yphoto_id
+        , YREPLY.ypromise_id AS ypromise_id
+        , YREPLY.yreply_id AS yreply_id
+        , YREPLY.ytitle AS ytitle
+		  FROM YAMAN, YREPLY
+		 WHERE YAMAN.YAMAN_ID = #{yaman_id} AND YREPLY.yreply_id = #{yreply_id}
+	</select>
+	
+	<select id="replyAllList" resultType="com.cherry.reply.domain.ReplyDto">
+		 SELECT yreply.YAMAN_ID, yreply.YPHOTO_ID, yreply.YPROMISE_ID, yreply.YREPLY_ID, yreply.YTITLE, yname 
+		   FROM YREPLY , yaman
+		  WHERE yreply.yaman_id = yaman.YAMAN_ID 
+		    AND YPROMISE_id = #{ypromise_id}  ORDER BY TO_NUMBER(yreply_id) DESC
+	</select>
+	
+	<delete id="deleteReply">
+		DELETE FROM YREPLY
+		 WHERE YREPLY_id = #{YREPLY_id}
+	</delete>
+</mapper>

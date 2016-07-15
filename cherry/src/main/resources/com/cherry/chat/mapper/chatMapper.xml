@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+ <mapper namespace="com.cherry.chat.mapper.chatMapper">
+ 	
+ 	<!-- 채팅에서 내 친구 목록 불러오는 쿼리 -->
+ 	<select id="myFriends" resultType="com.cherry.chat.domain.FriendDto">
+ 		SELECT yaman_id
+	 		 , yname 
+  		  FROM YAMAN 
+ 		 WHERE yaman_id in (
+ 								SELECT yaman_two
+                      			  FROM YFRIEND
+                     			 WHERE yaman_one = #{yaman_one}
+                       			   AND y_status = 1
+ 							)
+  		   AND yok = 1 
+ 	</select>
+ 	 
+  	<!-- 채팅에서 내 친구 들 검색 하는 쿼리 -->
+  	<select id="searchFd" resultType="com.cherry.chat.domain.FriendDto" parameterType="com.cherry.chat.domain.SearchDto">
+  		SELECT yaman_id
+	 		 , yname 
+  		  FROM YAMAN 
+ 		 WHERE yaman_id IN (
+ 								SELECT yaman_two
+                      			  FROM YFRIEND
+                     			 WHERE yaman_one = #{yaman_one}
+                       			   AND y_status = 1
+ 							)
+  		   AND yname LIKE '%' || #{yname} || '%'
+  		   AND yok = 1
+  	</select>
+  	
+  	<!-- 채팅방 이름, 초대자, 받는사람 저장하는 쿼리 -->
+  	<insert id="insertRoom" parameterType="com.cherry.chat.domain.RoomDto">
+  		 INSERT INTO MESSAGE
+  		      VALUES (MESSAGE_MID_SEQ.NEXTVAL, #{friend_one}, #{friend_two}, #{roomname}, '0')
+  	</insert>
+  	
+  	<!-- 메세지를 가져오는 쿼리 -->
+  	<select id="getMessage" resultType="com.cherry.chat.domain.MessageDto">
+		SELECT y.yname AS yname, m.roomname AS roomname, m.MID AS mid
+		  FROM YAMAN y, MESSAGE m
+		 WHERE y.YAMAN_ID IN (
+		 						SELECT friend_one
+		                          FROM MESSAGE
+		                         WHERE friend_two = #{friend_two}
+		                           AND status = 0
+		 					)
+		   AND m.FRIEND_TWO = #{friend_two}
+		   AND m.STATUS = 0
+  	</select>  	
+  	
+  	<!-- 채팅 수락/거절 업데이트 쿼리 -->
+  	<update id="nopeChat">
+  		UPDATE MESSAGE 
+   		   SET status = '2' 
+ 		 WHERE mid = #{mid}
+  	</update>
+  	  	<update id="yesChat">
+  		UPDATE MESSAGE 
+   		   SET status = '1' 
+ 		 WHERE mid = #{mid}
+  	</update>
+  	
+  	<!-- 초대 메세지에서 방이름을 가져오는 쿼리 -->
+  	<select id="getRoomName" resultType="com.cherry.chat.domain.MessageDto">
+		SELECT roomname
+		  FROM MESSAGE
+		 WHERE mid = #{mid}
+  	</select>
+  	
+  	<!-- 내방 리스트에 입력 -->
+  	<insert id="insertMyRoomList" parameterType="com.cherry.chat.domain.RoomListDto">
+  		INSERT INTO YCHATLIST 
+  			VALUES ( YCHATLIST_YCHATLIST_ID_SEQ.NEXTVAL, #{yaman_id}, #{roomname})
+  	</insert>
+  	
+  	<!-- 내방 리스트 가져오기 -->
+  	<select id="getMyChatRoomList" resultType="com.cherry.chat.domain.RoomListDto">
+  		SELECT * 
+  		  FROM YCHATLIST
+	 	 WHERE yaman_id = #{yaman_id}
+  	</select>
+  	
+  	<!-- 방 안에 참여자 리스트 가져오기 -->
+  	<select id="getRoomMember" resultType="com.cherry.chat.domain.FriendDto" parameterType="com.cherry.chat.domain.GetMemberDto">
+  		SELECT yname
+  		  FROM YAMAN
+ 		 WHERE yaman_id IN (
+ 							SELECT yaman_id
+                          	  FROM YCHATLIST
+                         	 WHERE roomname = #{roomname}
+ 						)
+ 		  AND NOT yaman_id = #{yaman_id}
+  	</select>
+  	<!-- 내 방 삭제 -->
+  	<delete id="deleteMyChatRoom">
+  		DELETE YCHATLIST
+  		 WHERE ychatlist_id = #{ychatlist_id}
+  	</delete>
+  	
+  	<!-- 마지막으로 등록된 내 방 정보 가져오기 -->
+  	<select id="getLastInsert" resultType="com.cherry.chat.domain.LastSequenceDto">
+  		SELECT YCHATLIST_YCHATLIST_ID_SEQ.CURRVAL AS YCHATLIST_ID
+		  FROM dual
+  	</select>
+  	
+  	<!-- 마지막으로 등록된 내 방 정보 가져오기 하나 -->
+  	<select id="getListInsertRoomInfo" resultType="com.cherry.chat.domain.RoomListDto">
+  		SELECT * FROM YCHATLIST WHERE ychatlist_id = #{ychatlist_id}
+  	</select>
+ </mapper>

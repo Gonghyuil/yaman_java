@@ -1,0 +1,977 @@
+<html>
+<head>
+
+  <title>YAMA CHAT</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+  <script src="//code.jquery.com/jquery.min.js"></script>
+  <script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
+  <link href="/stylesheets/style.css" rel="stylesheet"/>
+  <!--<script src="/javascripts/script.js"></script>-->
+  <script>
+    //채팅 스크립트
+    var socket = io.connect('http://192.168.56.115:4000/');
+    var yaman_id;
+    var yaman_id2;
+    socket.on('broadcast_msg',function(data){
+      console.log(data.msg);
+      $('#msgs').append('<div class="pinched">'+data.msg+'</div><BR>');
+      var objDiv = document.getElementById("chat-con");
+      objDiv.scrollTop = objDiv.scrollHeight;
+    });
+
+    socket.on('talk to other', function(data){
+      $('#msgs').append(data.nickname+'<p class="talk other">'+data.msg+'</p>');
+      var objDiv = document.getElementById("chat-con");
+      objDiv.scrollTop = objDiv.scrollHeight;
+    });
+
+    socket.on('talk to me', function(data){
+      $('#msgs').append('<p class="talk me">'+data.msg+'</p>');
+      var objDiv = document.getElementById("chat-con");
+      objDiv.scrollTop = objDiv.scrollHeight;
+    });
+
+    socket.on('getBeforeChatContent',function(data){
+      if(data.beforeChat.length == 0){
+        alert("이전 채팅 내용이 없습니다.");
+      }
+      for(var i = 0; i<data.beforeChat.length; i++) {
+        if (data.beforeChat[i].username == '<%=user%>') {
+          $('#msgs').append('<p class="talk me">' + data.beforeChat[i].message + '</p>');
+          var objDiv = document.getElementById("chat-con");
+          objDiv.scrollTop = objDiv.scrollHeight;
+        } else {
+          $('#msgs').append(data.beforeChat[i].username + '<p class="talk other">' + data.beforeChat[i].message + '</p>');
+          var objDiv = document.getElementById("chat-con");
+          objDiv.scrollTop = objDiv.scrollHeight;
+        }
+      }
+    });
+
+    Map = function(){
+      this.map = new Object();
+    };
+    Map.prototype = {
+      put : function(key, value){
+        this.map[key] = value;
+      },
+      get : function(key){
+        return this.map[key];
+      },
+      containsKey : function(key){
+        return key in this.map;
+      },
+      containsValue : function(value){
+        for(var prop in this.map){
+          if(this.map[prop] == value) return true;
+        }
+        return false;
+      },
+      isEmpty : function(key){
+        return (this.size() == 0);
+      },
+      clear : function(){
+        for(var prop in this.map){
+          delete this.map[prop];
+        }
+      },
+      remove : function(key){
+        delete this.map[key];
+      },
+      keys : function(){
+        var keys = new Array();
+        for(var prop in this.map){
+          keys.push(prop);
+        }
+        return keys;
+      },
+      values : function(){
+        var values = new Array();
+        for(var prop in this.map){
+          values.push(this.map[prop]);
+        }
+        return values;
+      },
+      size : function(){
+        var count = 0;
+        for (var prop in this.map) {
+          count++;
+        }
+        return count;
+      }
+    };
+    var fp = new Map();
+   /* var bounds2 = new daum.maps.LatLngBounds();*/
+    //지도 위치 받아오기
+    socket.on('get_place',function(data){
+
+      yaman_id = data.yaman_id;
+      yaman_id2 = data.yaman_id;
+
+      alert(yaman_id);
+      if(fp.isEmpty()){
+
+
+        yaman_id2 = new daum.maps.Marker({
+          // 지도 중심좌표에 마커를 생성합니다
+          position: new daum.maps.LatLng(data.place.ab, data.place.$a)
+        });
+        mypointname(받은 이름 적어줘, new daum.maps.LatLng(data.place.ab, data.place.$a));
+        yaman_id2.setMap(map);
+        bounds2.extend(new daum.maps.LatLng(data.place.ab, data.place.$a));
+        map.setBounds(bounds2);
+        fp.put(yaman_id, yaman_id2);
+
+      }else{
+        for(i=0; i<fp.size(); i++){
+          alert(fp.keys());
+          if( fp.containsKey(yaman_id) ){
+            fp.get(yaman_id).setPosition(new daum.maps.LatLng(data.place.ab, data.place.$a));
+            mypointname(받은 이름 적어줘, new daum.maps.LatLng(data.place.ab, data.place.$a));
+            bounds2.extend(new daum.maps.LatLng(data.place.ab, data.place.$a));
+            map.setBounds(bounds2);
+          }else{
+
+            yaman_id2 = new daum.maps.Marker({
+              // 지도 중심좌표에 마커를 생성합니다
+              position: new daum.maps.LatLng(data.place.ab, data.place.$a)
+            });
+            
+            mypointname(받은 이름 적어줘, new daum.maps.LatLng(data.place.ab, data.place.$a));
+            // 지도에 마커를 표시합니다
+            yaman_id2.setMap(map);
+            fp.put(yaman_id, yaman_id2);
+            bounds2.extend(new daum.maps.LatLng(data.place.ab, data.place.$a));
+            map.setBounds(bounds2);
+          }
+        }
+      }
+    });
+	
+    function mypointname( name, mypointname ){
+    	var iwContent2 = '<div style="padding:5px;">Hello World!</div>', // 인포윈도우에 표출될 내용으로 HTML 문자열이나 document element가 가능합니다
+        iwPosition2 = mypointname, //인포윈도우 표시 위치입니다
+        iwRemoveable2 = true; // removeable 속성을 ture 로 설정하면 인포윈도우를 닫을 수 있는 x버튼이 표시됩니다
+	    // 인포윈도우를 생성하고 지도에 표시합니다
+	    var infowindow2 = new daum.maps.InfoWindow({
+	        map: map, // 인포윈도우가 표시될 지도
+	        position : iwPosition2, 
+	        content : iwContent2,
+	        removable : iwRemoveable2
+	    });
+    	
+    }
+    socket.emit('joinroom', {room: '<%=room%>', user: '<%=user%>', yaman_id: '<%=yaman_id%>'});
+	
+    $(document).ready(function(){
+      $("#msgbox").keyup(function(event) {
+        if (event.which == 13) {
+          if($('#msgbox').val().length == 0) {
+            alert("메세지를 입력하세요");
+            $('#msgbox').val('');
+          }else{
+            var hashtag = [];
+            hashtag = $('#msgbox').val();
+            if(hashtag[0] == "#"){
+              searchPlaces();
+              $('#demo').show();
+            }else {
+              socket.emit('send_msg', {to: $('#to').val(), msg: $('#msgbox').val()});
+              $('#msgbox').val('');
+            }
+          }
+        }
+      });
+
+      $("#btn").on('click',function(){
+        socket.emit('send_msg', {to: $('#to').val(), msg: $('#msgbox').val()});
+        $('#msgbox').val('');
+      });
+    });
+
+    // 새로운 사용자가 들어오거나, 사용자가 이름을 바꿨을때 "To" 리스트를 변경함
+    socket.on('userlist',function(data){
+      var users = data.users;
+      console.log(users);
+      console.log(data.users.length);
+      $('#to').empty().append('<option value="ALL">ALL</option>');
+      for(var i=0;i<data.users.length;i++){
+        $('#to').append('<option value="'+users[i]+'">'+users[i]+"</option>");
+      }
+    });
+
+    //메뉴 스크립트
+    $(document).ready(function() {
+      $('#nav li').hover(function() {
+        $('ul', this).slideDown(200);
+        $(this).children('a:first').addClass("hov");
+      }, function() {
+        $('ul', this).slideUp(100);
+        $(this).children('a:first').removeClass("hov");
+      });
+    });
+
+    //친구 초대 스크립트
+    $(function() {
+      var dialog;
+
+      dialog = $( "#friends-list" ).dialog({
+        autoOpen: false,
+        show: {
+          effect: "blind",
+          duration: 1000
+        },
+        hide: {
+          effect: "blind",
+          duration: 1000
+        },
+        height:500,
+        width: 350,
+        modal: true,
+        buttons: {
+          "Invite friends": function(){
+            var select_yaman_id="";
+            $('input:checkbox[name="c_f_list"]:checked').each(function(pi,po){
+              select_yaman_id += ","+po.value;
+            });
+            console.log(select_yaman_id);
+            $.ajax({
+              url: 'http://192.168.56.115:8890/cherry/ajax/invite/<%=room%>/<%=yaman_id%>/' + select_yaman_id,
+              type: 'get',
+              dataType: 'jsonp',
+              jsonpCallback: 'invite_friend',
+              success: function(json,textStaus,jqXHR){
+                alert(json.invite_msg);
+              },
+              error: function(jqXHR, textStatus, errorThrown){
+                alert('초대 메세지 전송 실패');
+              }
+            });
+
+            dialog.dialog( "close" );
+          },
+          Cancel: function() {
+            dialog.dialog( "close" );
+          }
+        },
+        close: function() {
+          dialog.dialog("close");
+        }
+      });
+
+      $( "#invite" ).on( "click", function() {
+        $.ajax({
+          url: 'http://192.168.56.115:8890/cherry/ajax/<%=yaman_id%>',
+          type: "get",
+          dataType: "jsonp",
+          jsonpCallback: "friend",
+          success: function(json,textStatus, jqXHR){
+
+            $('#f_list').children().remove();
+            dialog.dialog( "open" );
+            for(var i = 0; i<json.myFriendList.length; i++)
+            {
+              $('#f_list').append(
+                      '<tr>' +
+                      '<td>' +
+                      '<input type="checkbox" name="c_f_list" value="' +
+                      json.myFriendList[i].yaman_id +
+                      '">' +
+                      '</td>'+
+                      '<td>'+
+                      json.myFriendList[i].yname +
+                      '</td>'+
+                      '</tr>'
+              );
+            }
+          },error: function(jqXHR, textStatus, errorThrown){
+            alert("친구목록 가져오기 실패");
+          }
+        });
+      });
+    });
+
+    //친구 검색
+    $(function(){
+      $("#fd_name").on("keyup", function () {
+        var yname = $('#fd_name').val();
+        var url = 'http://192.168.56.115:8890/cherry/ajax/' + '<%=yaman_id%>' + '/searchfd/';
+        var callback = "serchfd";
+
+        if($('#fd_name').val().length == 0){
+          url = 'http://192.168.56.115:8890/cherry/ajax/' + '<%=yaman_id%>';
+          callback = 'friend';
+        }
+
+        $.ajax({
+          url: url + yname,
+          type: "get",
+          dataType: "jsonp",
+          jsonpCallback: callback,
+          success: function (json, textStatus, jqXHR) {
+            if(callback == "friend") {
+              $('#f_list').children().remove();
+              for (var i = 0; i < json.myFriendList.length; i++) {
+                $('#f_list').append(
+                        '<tr>' +
+                        '<td>' +
+                        '<input type="checkbox" name="c_f_list" value="' +
+                        json.myFriendList[i].yaman_id +
+                        '">' +
+                        '</td>' +
+                        '<td>' +
+                        json.myFriendList[i].yname +
+                        '</td>' +
+                        '</tr>'
+                );
+              }
+            }
+            if(callback == "serchfd") {
+              if (json.searchFdList.length == 0) {
+                $('#f_list').html(
+                        '<tr>' +
+                        '<td>' +
+                        '검색결과없음' +
+                        '</td>' +
+                        '</tr>'
+                );
+              } else {
+                for (var i = 0; i < json.searchFdList.length; i++) {
+                  $('#f_list').children().remove();
+                  $('#f_list').html(
+                          '<tr>' +
+                          '<td>' +
+                          '<input type="checkbox" name="c_f_list" value="' +
+                          json.searchFdList[i].yaman_id +
+                          '">' +
+                          '</td>' +
+                          '<td>' +
+                          json.searchFdList[i].yname +
+                          '</td>' +
+                          '</tr>'
+                  );
+                }
+              }
+            }
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            alert("실패");
+          }
+        });
+      });
+    });
+    $(function(){
+      //채팅내용 가져오기
+      $('#beforeChat').on('click',function(){
+        alert("채팅내용 가져오기");
+        socket.emit('pushBeforeChatContent', {room: '<%=room%>'});
+      });
+    });
+
+
+    var h1 = jQuery(self).height();
+    function setFixedPopupSize() {
+      alert("지도펼치기");
+      var wrapWidth = jQuery(self).width();
+      var wrapHeight = jQuery(self).height();
+
+      var w1 = jQuery(self).width();
+      var h1 = jQuery(self).height();
+
+      window.resizeTo(w1+830,h1+(h1/10));
+
+      $('#map-container').show();
+      $('#search-result').show();
+    }
+
+    function setFixedCloseSize(){
+      alert("지도 접기");
+
+      $('#map-container').hide();
+      $('#search-result').hide();
+      window.resizeTo(432,h1+(h1/10));
+    }
+
+    $(function(){
+      $('#here').on('click',function(){
+        if (navigator.geolocation) {
+
+          // GeoLocation을 이용해서 접속 위치를 얻어옵니다
+          navigator.geolocation.getCurrentPosition(function(position) {
+
+            var lat = position.coords.latitude, // 위도
+                    lon = position.coords.longitude; // 경도
+
+            var locPosition = new daum.maps.LatLng(lat, lon), // 마커가 표시될 위치를 geolocation으로 얻어온 좌표로 생성합니다
+                    message = '<div style="padding:5px;">여기에 계신가요?!</div>'; // 인포윈도우에 표시될 내용입니다
+
+            // 마커와 인포윈도우를 표시합니다
+            displayMarker(locPosition, message);
+
+          });
+
+        } else { // HTML5의 GeoLocation을 사용할 수 없을때 마커 표시 위치와 인포윈도우 내용을 설정합니다
+
+          var locPosition = new daum.maps.LatLng(33.450701, 126.570667),
+                  message = 'geolocation을 사용할수 없어요..'
+
+          displayMarker(locPosition, message);
+        }
+
+// 지도에 마커와 인포윈도우를 표시하는 함수입니다
+        function displayMarker(locPosition, message) {
+
+          // 마커를 생성합니다
+          var marker = new daum.maps.Marker({
+            map: map,
+            position: locPosition
+          });
+
+          var iwContent = message, // 인포윈도우에 표시할 내용
+                  iwRemoveable = true;
+
+          // 인포윈도우를 생성합니다
+          var infowindow = new daum.maps.InfoWindow({
+            content : iwContent,
+            removable : iwRemoveable
+          });
+
+          // 인포윈도우를 마커위에 표시합니다
+          infowindow.open(map, marker);
+
+          // 지도 중심좌표를 접속위치로 변경합니다
+          map.setCenter(locPosition);
+        }
+      });
+    });
+  </script>
+  <!--지도 관련 스크립트-->
+  <script>
+    $(function(){
+      $('#map-container').hide();
+      $('#search-result').hide();
+    });
+
+    function send_select_place(select_palce){
+      alert(select_palce);
+      socket.emit('send_place', {place: select_palce, yaman_id: '<%=yaman_id%>'});
+      console.log(select_palce + '<%=yaman_id%>');
+    }
+  </script>
+</head>
+<body>
+<script>
+  $("#close").on('click',function(){
+    $("#demo").hide();
+  });
+</script>
+<div id="total-container">
+  <div id="chat-container"style="float: left">
+    <div class="wrap">
+      <ul id="nav">
+        <li><a >채팅방 메뉴</a>
+          <ul>
+            <li><p id="invite">친구초대</p></li>
+            <li><p id="open_map" onclick="setFixedPopupSize();">지도 펼치기</p></li>
+            <li><p id="close_map" onclick="setFixedCloseSize();">지도 접기</p></li>
+            <li><p id="make-promise">약속잡기</p></li>
+            <li><p id="here">나 여기</p></li>
+            <li><p id="beforeChat">채팅 내용 가져오기</p></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div id= "chat-con" class="background">
+      <div>
+        <span id="msgs"></span>
+      </div>
+    </div>
+
+    <div class="background-mgs">
+      TO<select id="to" class="to">
+        <option value="ALL">ALL</option>
+      </select>
+      <input type="text" id="msgbox" class="msg"/>
+      <button id="btn" class="send" type="button">전송</button>
+    </div>
+  </div>
+
+
+  <div id="map-container" style="float:left;margin: 0 auto;display: inline-block">
+    <div id="map" style="width:380px;height:711px;position:relative;overflow:hidden;"></div>
+  </div>
+
+  <div id="search-result"style="float:left;height: 711px">
+    <div class="container" id="menu_wrap1" style="width:380px;height: 711px;margin: 0;">
+      <div id="demo" class="collapse">
+        <div>
+          <a href="#">
+            <span class="glyphicon glyphicon-remove" id="close"></span>
+          </a>
+        </div>
+      </div>
+      <hr>
+      <ul id="placesList"></ul>
+      <div id="pagination"></div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript" src="//apis.daum.net/maps/maps3.js?apikey=afc600bf35688f4d5028fa4f8b824a65&libraries=services"></script>
+<script>
+  var markers = [];
+  var latlng ;
+  var lat;
+  var lng;
+  var selectPosition;
+
+  var mapContainer = document.getElementById('map'), // 지도를 표시할 div
+          mapOption = {
+            center: new daum.maps.LatLng(37.566826, 126.9786567), // 지도의 중심좌표
+            level: 3 // 지도의 확대 레벨
+          };
+
+  // 지도를 생성합니다
+  var map = new daum.maps.Map(mapContainer, mapOption);
+
+  // 장소 검색 객체를 생성합니다
+  var ps = new daum.maps.services.Places();
+
+  // 검색 결과 목록이나 마커를 클릭했을 때 장소명을 표출할 인포윈도우를 생성합니다
+  var infowindow = new daum.maps.InfoWindow({zIndex:1});
+
+  // 키워드로 장소를 검색합니다
+  searchPlaces();
+
+  // 키워드 검색을 요청하는 함수입니다
+  function searchPlaces() {
+
+    var search = document.getElementById('msgbox').value;
+    var keyword = search.replace(/\#/g,'');
+
+    if (!keyword.replace(/^\s+|\s+$/g, '')) {
+      return false;
+    }
+
+    // 장소검색 객체를 통해 키워드로 장소검색을 요청합니다
+    ps.keywordSearch( keyword, placesSearchCB);
+  }
+
+  // 장소검색이 완료됐을 때 호출되는 콜백함수 입니다
+  function placesSearchCB(status, data, pagination) {
+    if (status === daum.maps.services.Status.OK) {
+
+      // 정상적으로 검색이 완료됐으면
+      // 검색 목록과 마커를 표출합니다
+      displayPlaces(data.places);
+
+      // 페이지 번호를 표출합니다
+      displayPagination(pagination);
+
+    } else if (status === daum.maps.services.Status.ZERO_RESULT) {
+
+      alert('검색 결과가 존재하지 않습니다.');
+      return;
+
+    } else if (status === daum.maps.services.Status.ERROR) {
+
+      alert('검색 결과 중 오류가 발생했습니다.');
+      return;
+
+    }
+  }
+
+  // 검색 결과 목록과 마커를 표출하는 함수입니다
+  function displayPlaces(places) {
+
+    var listEl = document.getElementById('placesList'),
+            menuEl = document.getElementById('menu_wrap1'),
+            fragment = document.createDocumentFragment(),
+            bounds = new daum.maps.LatLngBounds(),
+            listStr = '';
+
+    // 검색 결과 목록에 추가된 항목들을 제거합니다
+    removeAllChildNods(listEl);
+
+    // 지도에 표시되고 있는 마커를 제거합니다
+    removeMarker();
+
+    for ( var i=0; i<places.length; i++ ) {
+
+      // 마커를 생성하고 지도에 표시합니다
+      var placePosition = new daum.maps.LatLng(places[i].latitude, places[i].longitude),
+              marker = addMarker(placePosition, i),
+              itemEl = getListItem(i, places[i], marker); // 검색 결과 항목 Element를 생성합니다
+
+      // 검색된 장소 위치를 기준으로 지도 범위를 재설정하기위해
+      // LatLngBounds 객체에 좌표를 추가합니다
+      bounds.extend(placePosition);
+
+      // 마커와 검색결과 항목에 mouseover 했을때
+      // 해당 장소에 인포윈도우에 장소명을 표시합니다
+      // mouseout 했을 때는 인포윈도우를 닫습니다
+      (function(marker, title) {
+        daum.maps.event.addListener(marker, 'mouseover', function() {
+          displayInfowindow(marker, title);
+        });
+
+        daum.maps.event.addListener(marker,'click',function(){
+          removeMarker();//마커를 제거함
+
+          latlng = marker.getPosition();
+          lat = latlng.getLat();//클릭한 위도 가져오기
+          lng = latlng.getLng();//클릭한 경도 가져오기
+
+          selectMarker(latlng,lat,lng,title);
+
+          send_select_place(latlng);
+        });
+
+        daum.maps.event.addListener(marker, 'mouseout', function() {
+        });
+
+        itemEl.onmouseover =  function () {
+          displayInfowindow(marker, title);
+        };
+
+        itemEl.onmouseout =  function () {
+          infowindow.close();
+        };
+
+        itemEl.onclick = function(){
+          removeMarker();
+          latlng = marker.getPosition();
+          //클릭한 위도 가져오기
+          //클릭한 경도 가져오기
+          lat = latlng.getLat();
+          lng = latlng.getLng();
+          selectMarker(latlng,lat,lng, title);
+          send_select_place(latlng);
+        }
+
+      })(marker, places[i].title);
+
+      fragment.appendChild(itemEl);
+    }
+
+    // 검색결과 항목들을 검색결과 목록 Elemnet에 추가합니다
+    listEl.appendChild(fragment);
+    menuEl.scrollTop = 0;
+
+    // 검색된 장소 위치를 기준으로 지도 범위를 재설정합니다
+    map.setBounds(bounds);
+
+
+
+  }
+
+  // 검색결과 항목을 Element로 반환하는 함수입니다
+  function getListItem(index, places) {
+
+    var el = document.createElement('li'),
+            itemStr = '<span class="markerbg marker_' + (index+1) + '"></span>' +
+                    '<div class="info">' +
+                    '   <h5>' + places.title + '</h5>';
+
+    if (places.newAddress) {
+      itemStr += '<span>' + places.newAddress + '</span>' +
+              '<span class="jibun gray">' +  places.address  + '</span>';
+    } else {
+      itemStr += '<span>' +  places.address  + '</span>';
+    }
+
+    itemStr += '  <span class="tel">' + places.phone  + '</span>' +
+            '</div>';
+
+    el.innerHTML = itemStr;
+    el.className = 'item';
+
+    return el;
+  }
+  http://cfile8.uf.tistory.com/image/2729A739559F68BF1C508E
+  // 마커를 생성하고 지도 위에 마커를 표시하는 함수입니다
+  function addMarker(position, idx, title) {
+    var imageSrc = 'http://cfile8.uf.tistory.com/image/2729A739559F68BF1C508E', // 마커 이미지 url, 스프라이트 이미지를 씁니다
+            imageSize = new daum.maps.Size(36, 37),  // 마커 이미지의 크기
+            imgOptions =  {
+              spriteSize : new daum.maps.Size(36, 691), // 스프라이트 이미지의 크기
+              spriteOrigin : new daum.maps.Point(0, (idx*46)+10), // 스프라이트 이미지 중 사용할 영역의 좌상단 좌표
+              offset: new daum.maps.Point(13, 37) // 마커 좌표에 일치시킬 이미지 내에서의 좌표
+            },
+            markerImage = new daum.maps.MarkerImage(imageSrc, imageSize, imgOptions),
+            marker = new daum.maps.Marker({
+              position: position, // 마커의 위치
+              image: markerImage
+            });
+
+    marker.setMap(map); // 지도 위에 마커를 표출합니다
+    markers.push(marker);  // 배열에 생성된 마커를 추가합니다
+
+    return marker;
+  }
+
+  // 지도 위에 표시되고 있는 마커를 모두 제거합니다
+  function removeMarker() {
+    for ( var i = 0; i < markers.length; i++ ) {
+      markers[i].setMap(null);
+    }
+    markers = [];
+  }
+
+  // 검색결과 목록 하단에 페이지번호를 표시는 함수입니다
+  function displayPagination(pagination) {
+    var paginationEl = document.getElementById('pagination'),
+            fragment = document.createDocumentFragment(),
+            i;
+
+    // 기존에 추가된 페이지번호를 삭제합니다
+    while (paginationEl.hasChildNodes()) {
+      paginationEl.removeChild (paginationEl.lastChild);
+    }
+
+    for (i=1; i<=pagination.last; i++) {
+      var el = document.createElement('a');
+      el.href = "#";
+      el.innerHTML = i;
+
+      if (i===pagination.current) {
+        el.className = 'on';
+      } else {
+        el.onclick = (function(i) {
+          return function() {
+            pagination.gotoPage(i);
+          }
+        })(i);
+      }
+
+      fragment.appendChild(el);
+    }
+    paginationEl.appendChild(fragment);
+  }
+
+  // 검색결과 목록 또는 마커를 클릭했을 때 호출되는 함수입니다
+  // 인포윈도우에 장소명을 표시합니다
+  function displayInfowindow(marker, title) {
+    var content = '<div style="padding:5px;z-index:1;">' + title + '</div>';
+
+    infowindow.setContent(content);
+    infowindow.open(map, marker);
+  }
+
+  // 검색결과 목록의 자식 Element를 제거하는 함수입니다
+  function removeAllChildNods(el) {
+    while (el.hasChildNodes()) {
+      el.removeChild (el.lastChild);
+    }
+  }
+
+  function selectMarker(latlng ,lat, lng, title){
+
+    //클릭한 지도로 이동하기
+    var moveLatLon = new daum.maps.LatLng(lat,lng);
+    map.panTo(moveLatLon);
+
+
+    var imgSrc ='/grade/images/apple.png',
+            imgSize = new daum.maps.Size(64,69),
+            imgOption={offset: new daum.maps.Point(27,69)};//아직 무슨 옵션인지 잘 모르겠음
+
+    //마커의 이미지 정보를 가지고 있는 이미지 마커를 생성
+    var markerImg = new daum.maps.MarkerImage(imgSrc, imgSize, imgOption);
+
+    marker = new daum.maps.Marker({
+      //지도 중심좌표에 마커를 생성
+      position: latlng,
+      //마커의 이미지 설정
+      image: markerImg
+    });
+
+    selectPosition = title;//위치정보 저장
+
+    marker.setMap(map);
+    markers.push(marker);
+
+  }
+
+  var geocoder = new daum.maps.services.Geocoder();
+
+  //직접 입력시 마커표시와 정보
+  daum.maps.event.addListener(map, 'click', function(mouseEvent){
+    removeMarker();
+
+    latlng = mouseEvent.latLng;
+    lat = latlng.getLat();
+    lng = latlng.getLng();
+
+    var content
+    searchDetailAddrFromCoords(latlng, function(status, result) {
+      if (status === daum.maps.services.Status.OK) {
+        var detailAddr = !!result[0].roadAddress.name ? result[0].roadAddress.name  : '';
+        detailAddr += result[0].jibunAddress.name ;
+
+        content = detailAddr;
+
+      }
+
+      selectMarker(latlng,lat,lng, content);
+      markers.push(marker);
+      send_select_place(latlng);
+    });
+
+  });
+
+  function searchDetailAddrFromCoords(coords, callback) {
+    // 좌표로 법정동 상세 주소 정보를 요청합니다
+    geocoder.coord2detailaddr(coords, callback);
+  }
+  var marker2;
+  function promiseMap(lat, lng, selectPosition) {
+
+    var mapContainer2 = document.getElementById('testMap2'),// 지도를 표시할 div
+            mapOption2 = {
+              center: new daum.maps.LatLng(lat, lng), // 지도의 중심좌표
+              level: 3 // 지도의 확대 레벨
+            };
+
+
+    // 지도를 생성합니다
+    var map2 = new daum.maps.Map(mapContainer2, mapOption2);
+    var markerPosition = new daum.maps.LatLng(lat, lng);
+
+    //마커를 생성합니다.
+    marker2 = new daum.maps.Marker({
+      position: markerPosition
+    });
+
+    //마커가 지도 위에 표시되도록 설정합니다
+    marker2.setMap(map2);
+
+    marker2.setPosition(new daum.maps.LatLng(lat, lng));
+    $("#yproloc").val(selectPosition);
+
+
+  }
+  var bounds2 = new daum.maps.LatLngBounds();
+
+  function havePromise(){
+    alert(lat + "," + lng);
+    $.ajax({
+      url: "http://192.168.1.138:8890/cherry/prosub",
+      type: "post",
+      data: 'yproname=' + $('#yproname').val() +
+      '&yprodate=' + $("#yprodate").val() +
+      '&yprostart=' + $("#yprostart").val() +
+      '&yproloc=' + $("#yproloc").val() +
+      '&yprolocx=' + lat +
+      '&yprolocy=' + lng +
+      '&roomname=' + '<%=room%>' +
+      '&yaman_id=' + '<%=yaman_id%>',
+      dataType: 'jsonp',
+      jsonpCallback: "make-promise",
+      success: function (data) {
+        alert("저장완료");
+        alert(data.yprolocx + data.yproname);
+
+      }
+    });
+  }
+
+  /*약속잡기 스크립트*/
+  $(function() {
+    var dialog;
+
+    dialog = $( "#sure-promise" ).dialog({
+      autoOpen: false,
+      show: {
+        effect: "blind",
+        duration: 1000
+      },
+      hide: {
+        effect: "blind",
+        duration: 1000
+      },
+      height:500,
+      width: 350,
+      modal: true,
+      buttons: {
+        "약속잡기": function(){
+          havePromise();
+          dialog.dialog( "close" );
+        },
+        Cancel: function() {
+          marker2.setMap(null);
+          dialog.dialog( "close" );
+        }
+      },
+      close: function() {
+        marker2.setMap(null);
+        dialog.dialog("close");
+      }
+    });
+	
+
+    $( "#make-promise" ).on( "click", function() {
+      dialog.dialog( "open" );
+      setTimeout("relayout()", 2000);
+      promiseMap(lat, lng, selectPosition);
+
+    });
+  });
+
+</script>
+
+<!-- 친구초대 모달 -->
+<div id="friends-list" title="내 친구목록">
+  <fieldset>
+    <div id="search" style="display: table">
+      <div id="f_name" style="display: table-cell; padding: 15px">
+        <label for="name">
+          <p id="name" style="width: 60px;">친구 이름</p>
+        </label>
+      </div>
+      <div id="input_f_name" style="display: table-cell; padding-left: 15px; padding-right: 15px">
+        <input type="text" id="fd_name" style="width: 130px" placeholder="친구이름을 입력하세요.">
+        <input type="button" id="name-search" value="검색">
+      </div>
+    </div>
+  </fieldset>
+  <fieldset>
+    <div id="my_f_list">
+      <p>내 친구목록</p>
+      <p>#현재 접속된 친구 목록만 보여집니다.</p>
+      <hr>
+      <div id="list">
+        <table id="f_list">
+        </table>
+      </div>
+    </div>
+  </fieldset>
+</div>
+
+<div id="sure-promise" title="내 친구목록">
+  <div>
+    <div id="testMap2" style="width:100%;height:300px;"></div>
+  </div>
+  <div>
+    <div>
+      <label for="yproname">약속 이름:</label>
+      <input type="text" class="form-control" id="yproname">
+    </div>
+    <div>
+      <label for="yprodate">약속 날짜:</label>
+      <input type="text" class="form-control" id="yprodate">
+    </div>
+    <div>
+      <label for="yprostart">약속 시간:</label>
+      <input type="text" class="form-control" id="yprostart">
+    </div>
+    <div>
+      <label for="yproloc">약속 장소:</label>
+      <input type="text" class="form-control" id="yproloc">
+    </div>
+  </div>
+  <button type="button" class="btn btn-success" id="probtn">약속 확정</button>
+</div>
+
+</body>
+</html>

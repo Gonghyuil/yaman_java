@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cherry.signup.mapper.signupMapper">
+	<insert id="signUp" parameterType="com.cherry.signup.domain.YcheckDto">
+		INSERT into YAMAN (yaman_id, ybirth, ycompany, yemail, yhello, yname, yphone, yschool)
+		VALUES(SEQ_YAMAN_ID.NEXTVAL, #{ybirth}, #{ycompany}, #{yemail}, #{yhello}, #{yname}, #{yphone}, #{yschool})
+		
+		<selectKey keyProperty="yaman_id" resultType="String" order="AFTER">
+			select SEQ_YAMAN_ID.currval from dual
+		</selectKey>
+	</insert>
+	
+	<insert id="insertPwd">
+		INSERT INTO ylogin (yaman_id, ypass)
+		VALUES ( #{yaman_id}, #{ypass})
+	</insert>
+	
+	<update id="yfaceUpload">
+		UPDATE YAMAN
+   		   SET yface = #{yface}
+		 WHERE yemail = #{yemail} 
+	</update>
+</mapper>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kedu.cherry.mapper.photoMapper">
+	
+	<!-- 사진 입력 쿼리 -->
+	<insert id="photoInsert">
+		insert into yphoto (yphoto_id, yphotofile, ypromise_id, yaman_id)
+		values(yphoto_id_seq.nextval,#{yphotofile} , #{ypromise_id} ,#{yaman_id})
+	</insert>
+	
+	<!-- 사진리스트 by 약속 -->
+	<select id="onePromisePhotoAllList" resultType="com.cherry.photo.domain.PhotoDto">
+		select * from yphoto where ypromise_id = #{ypromise_id}
+	</select>
+	
+	<!-- 모든 내 사진 리스트 -->
+	<select id="photoAllMyList" resultType="com.cherry.photo.domain.PhotoDto">
+		SELECT * FROM yphoto WHERE YPROMISE_ID = #{ypromise_id} AND YAMAN_ID = #{yaman_id}
+	</select>
+	
+	<!-- 모든 사진 리스트 -->
+	<select id="photoAllList" resultType="com.cherry.photo.domain.PhotoDto">
+		select * from yphoto where ypromise_id = #{ypromise_id}
+	</select>
+	
+	<delete id="photoDelete">
+		DELETE FROM YPHOTO
+		 WHERE yphoto_id = #{yphoto_id}
+	</delete>
+	
+	
+	
+</mapper>
+
+

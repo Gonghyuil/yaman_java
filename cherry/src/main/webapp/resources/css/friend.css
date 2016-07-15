@@ -1,0 +1,36 @@
+@CHARSET "UTF-8";
+
+.fd_Tbody{
+	text-align: center;	
+}
+.fd_myInfoThead tr,th{
+	text-align: center;
+}
+img{
+	border-radius: 8px;
+}
+.fd_myInfo input{
+	text-align: center;
+	border: 0px;
+}
+.fd_myInfoBtn{
+	text-align: center;
+}
+.fd_myFdInfo input{
+	text-align: center;
+	border: 0px;
+}
+.fd_myFdInfoBtn{
+	text-align: center;
+}
+.fd_myInfoUpdate input{
+	text-align: left;
+	border : 2px dotted skyblue;
+}
+.fd_a{
+	font-size: 35px;
+	color: #31c02e;
+}
+.fd_myInfoUpdateBtn{
+	text-align: center;
+}

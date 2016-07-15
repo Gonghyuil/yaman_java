@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+ <mapper namespace="com.cherry.promise.mapper.PromiseMapper">
+ 
+<!-- <resultMap id="proMap" type="com.cherry.promise.domain.PromiseDto">
+       <id         property="ypromise_id"   column="ypromise_id" />
+       <result      property="yproname"      column="yproname" />
+       <result      property="yprodate"      column="yprodate" />
+       <result      property="yprostart"   column="yprostart" />
+       <result      property="yproend"      column="yproend" />
+       <result      property="yproloc"      column="yproloc" />
+       <result      property="yprodone"      column="yprodone" />
+       <result      property="yprodel"      column="yprodel" />
+    </resultMap> -->
+    
+    <select id="selectAll" resultType="com.cherry.promise.domain.PromiseDto">
+    
+		SELECT * 
+		  FROM (
+		              select * 
+		            FROM ypromise 
+		           WHERE ypromise_id IN (
+		                                               select yjoin 
+		                                      AS ypromise_id 
+		                                    FROM yjoin 
+		                                   WHERE yaman_id = #{yaman_id}
+		                                            ) 
+		             AND yprodate &gt;= TO_CHAR(SYSDATE,'YYYYMMDD')
+		             AND yprodel = 'N' 
+		             ORDER BY yprodate ASC
+		           )
+		   WHERE ROWNUM &lt; 6
+  
+    </select>
+    
+    
+     <select id="selectOne" resultType="com.cherry.promise.domain.PromiseDto"  parameterType="com.cherry.promise.domain.PromiseDto">
+       select * 
+         from YPROMISE 
+        where ypromise_id = #{ypromise_id, jdbcType=VARCHAR}
+     </select>
+    
+    <select id = "selectList" resultType="com.cherry.promise.domain.PromiseDto" parameterType="com.cherry.promise.domain.GetMyPromiseDto">
+       SELECT *
+  		 FROM YPROMISE
+ 		WHERE ypromise_id IN (
+ 								SELECT YJOIN
+                          		  FROM YJOIN
+                         		 WHERE yaman_id = #{yaman_id}
+ 							)
+  		 AND yprodate = #{yprodate}
+  		 AND yprodel = 'N'
+     </select>
+    
+   <insert id="insertPromise"  parameterType="com.cherry.promise.domain.PromiseDto">
+       INSERT 
+         INTO YPROMISE 
+          ( ypromise_id, yproname, yprodate, yprostart, yproend, yproloc) 
+       VALUES 
+          ( SEQ_YPROMISE_ID.NEXTVAL, #{yproname, jdbcType=VARCHAR}, #{yprodate, jdbcType=VARCHAR}, #{yprostart, jdbcType=VARCHAR}, #{yproend, jdbcType=VARCHAR}, #{yproloc, jdbcType=VARCHAR})
+          <selectKey keyProperty="ypromise_id" resultType="String" order="AFTER">
+             select SEQ_YPROMISE_ID.currval from dual
+          </selectKey>
+    </insert>
+    
+    <update id="updatePromise" parameterType="com.cherry.promise.domain.PromiseDto">
+       update YPROMISE 
+          set yproname = #{yproname, jdbcType=VARCHAR},
+              yprodate = #{yprodate, jdbcType=VARCHAR}, 
+              yprostart = #{yprostart, jdbcType=VARCHAR}, 
+              yproend = #{yproend, jdbcType=VARCHAR}, 
+              yproloc = #{yproloc, jdbcType=VARCHAR}
+        where ypromise_id = #{ypromise_id, jdbcType=VARCHAR}
+    </update>
+    
+    <delete id="deletePromise">
+         UPDATE ypromise
+           set yprodel='Y'
+          WHERE ypromise_id = #{ypromise_id, jdbcType=VARCHAR}
+    </delete>
+
+    <select id="listAllpromise" resultType="com.cherry.promise.domain.PromiseDto">
+		  SELECT *
+            FROM YPROMISE
+              WHERE ypromise_id 
+                 	in
+                  	  (SELECT YJOIN AS YPROMISE_id 
+                         FROM YJOIN 
+                        WHERE yaman_id = #{ypromise_id}
+                           or YAMANS = #{ypromise_id} 
+                       )
+                AND yprodone = 'Y'
+    </select>
+    
+   <select id="checkPromise" resultType="com.cherry.promise.domain.PromiseDto">
+        select * FROM (SELECT * FROM ypromise WHERE yprodate=#{yprodate}) WHERE #{yprostart} BETWEEN yprostart AND yproend
+    </select>
+    
+    <select id="promiseMap" resultType="com.cherry.promise.domain.PromiseDto">
+      SELECT *
+        FROM YPROMISE
+       WHERE ypromise_id= #{ypromise_id}
+   </select>
+   
+   	<!--약속입력-->
+   	<insert id="yproinsert"  parameterType="com.cherry.promise.domain.PromiseDto">
+       INSERT 
+         INTO YPROMISE 
+          ( ypromise_id, yproname, yprodate, yprostart, yproloc, yprolocx, yprolocy) 
+       VALUES 
+          ( SEQ_YPROMISE_ID.NEXTVAL, #{yproname, jdbcType=VARCHAR}
+          , #{yprodate, jdbcType=VARCHAR}, #{yprostart, jdbcType=VARCHAR} 
+          ,#{yproloc, jdbcType=VARCHAR} , #{yprolocx, jdbcType=VARCHAR} 
+          ,#{yprolocy, jdbcType=VARCHAR})
+          <selectKey keyProperty="ypromise_id" resultType="String" order="AFTER">
+             select SEQ_YPROMISE_ID.currval from dual
+          </selectKey>
+     </insert>
+	
+	<!-- 방의 회원 가져오기-->
+	<select id="selectfriendId" resultType="com.cherry.promise.domain.MessageDto2">
+		select *
+		  from ychatlist
+		 where roomname = #{roomname}
+	</select>
+	
+	<!-- 관계테이블에 추가-->
+	<insert id="insertYjoin" >
+		insert into yjoin(yjoin, yaman_id)
+		values(#{ypromise_id},#{yaman_id})
+	</insert>
+  
+ </mapper>
